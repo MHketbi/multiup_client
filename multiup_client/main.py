@@ -114,6 +114,9 @@ class MultiUpClient(TkinterDnD.Tk):
 
         self.submit_login_button = ttk.Button(self, text="Login", command=self.login)
         self.submit_login_button.place(x=150, y=100)
+        
+        self.error_label = ttk.Label(self, text="", foreground="red")
+        self.error_label.place(x=50, y=140)
 
     def show_login_ui(self):
         self.geometry("400x200")
@@ -134,18 +137,18 @@ class MultiUpClient(TkinterDnD.Tk):
         password = self.password_entry.get()
 
         if not username and not password:
-            print("Please type in user credentials")
+            self.error_label.config(text="Please type in user credentials")
         elif not username:
-            print("Please type in username")
+            self.error_label.config(text="Please type in username")
         elif not password:
-            print("Please type in password")
+            self.error_label.config(text="Please type in password")
         else:
             self.account_id = get_account_id(username, password)
             if self.account_id is not None:
                 save_credentials(username, password)
                 self.show_main_ui()
             else:
-                print("Invalid credentials")
+                self.error_label.config(text="Invalid credentials")
 
     def show_main_ui(self):
         self.geometry("800x500")
@@ -184,6 +187,7 @@ class MultiUpClient(TkinterDnD.Tk):
                 print(response)
         else:
             print("Please log in first")
+
 
 if __name__ == "__main__":
     app = MultiUpClient()
