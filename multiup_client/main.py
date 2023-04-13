@@ -116,7 +116,7 @@ class MultiUpClient(TkinterDnD.Tk):
         self.submit_login_button.place(x=150, y=100)
         
         self.error_label = ttk.Label(self, text="", foreground="red")
-        self.error_label.place(x=50, y=140)
+        self.error_label.place(x=120, y=20)
 
     def show_login_ui(self):
         self.geometry("400x200")
@@ -126,11 +126,11 @@ class MultiUpClient(TkinterDnD.Tk):
         self.logout_button.place_forget()
         self.upload_button.place_forget()
 
-        self.username_label.place(x=50, y=20)
-        self.username_entry.place(x=110, y=20)
-        self.password_label.place(x=50, y=60)
-        self.password_entry.place(x=110, y=60)
-        self.submit_login_button.place(x=150, y=100)
+        self.username_label.place(x=100, y=50)
+        self.username_entry.place(x=160, y=50)
+        self.password_label.place(x=100, y=90)
+        self.password_entry.place(x=160, y=90)
+        self.submit_login_button.place(x=170, y=130)
 
     def login(self):
         username = self.username_entry.get()
