@@ -1,13 +1,13 @@
 import os
-import requests
+from tkinter import filedialog
 import tkinter as tk
 import tkinter.ttk as ttk
-from tkinter import filedialog
 from tkinterdnd2 import *
 import json
 import base64
 from cryptography.fernet import Fernet
 import getpass
+import requests
 
 def get_account_id(username, password):
     url = "https://multiup.org/api/get-user-id"
@@ -68,7 +68,6 @@ class MultiUpClient(TkinterDnD.Tk):
         super().__init__()
 
         self.title("MultiUp Client")
-        self.geometry("800x500")
         self.resizable(False, False)
 
         self.create_widgets()
@@ -101,54 +100,55 @@ class MultiUpClient(TkinterDnD.Tk):
         self.upload_button = ttk.Button(self, text="Upload", command=self.upload_files)
         self.upload_button.place(x=350, y=350)
 
-        self.login_button = ttk.Button(self, text="LOGIN", command=self.login_ui)
-        self.login_button.place(x=375, y=250)
-
         self.username_label = ttk.Label(self, text="Username:")
-        self.username_label.place(x=220, y=20)
+        self.username_label.place(x=50, y=20)
 
         self.username_entry = ttk.Entry(self)
-        self.username_entry.place(x=280, y=20)
+        self.username_entry.place(x=110, y=20)
 
         self.password_label = ttk.Label(self, text="Password:")
-        self.password_label.place(x=220, y=60)
+        self.password_label.place(x=50, y=60)
 
         self.password_entry = ttk.Entry(self, show="*")
-        self.password_entry.place(x=280, y=60)
+        self.password_entry.place(x=110, y=60)
 
         self.submit_login_button = ttk.Button(self, text="Login", command=self.login)
-        self.submit_login_button.place(x=350, y=100)
+        self.submit_login_button.place(x=150, y=100)
 
     def show_login_ui(self):
+        self.geometry("400x200")
         self.file_list.place_forget()
         self.server_list.place_forget()
         self.select_button.place_forget()
         self.logout_button.place_forget()
         self.upload_button.place_forget()
 
-        self.login_button.place(x=375, y=250)
-
-    def login_ui(self):
-        self.login_button.place_forget()
-
-        self.username_label.place(x=220, y=20)
-        self.username_entry.place(x=280, y=20)
-        self.password_label.place(x=220, y=60)
-        self.password_entry.place(x=280, y=60)
-        self.submit_login_button.place(x=350, y=100)
+        self.username_label.place(x=50, y=20)
+        self.username_entry.place(x=110, y=20)
+        self.password_label.place(x=50, y=60)
+        self.password_entry.place(x=110, y=60)
+        self.submit_login_button.place(x=150, y=100)
 
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
 
-        self.account_id = get_account_id(username, password)
-        if self.account_id is not None:
-            save_credentials(username, password)
-            self.show_main_ui()
+        if not username and not password:
+            print("Please type in user credentials")
+        elif not username:
+            print("Please type in username")
+        elif not password:
+            print("Please type in password")
         else:
-            print("Invalid credentials")
+            self.account_id = get_account_id(username, password)
+            if self.account_id is not None:
+                save_credentials(username, password)
+                self.show_main_ui()
+            else:
+                print("Invalid credentials")
 
     def show_main_ui(self):
+        self.geometry("800x500")
         self.username_label.place_forget()
         self.username_entry.place_forget()
         self.password_label.place_forget()
