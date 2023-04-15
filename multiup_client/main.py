@@ -114,7 +114,7 @@ class MultiUpClient(TkinterDnD.Tk):
 
         self.submit_login_button = ttk.Button(self, text="Login", command=self.login)
         self.submit_login_button.place(x=150, y=100)
-        
+
         self.error_label = ttk.Label(self, text="", foreground="red")
         self.error_label.place(x=120, y=20)
 
