@@ -6,23 +6,40 @@ from tkinterdnd2 import *
 import json
 import base64
 from cryptography.fernet import Fernet
-import getpass
 import requests
+import keyring
 
-def get_account_id(username, password):
-    url = "https://multiup.org/api/get-user-id"
-    data = {"user": username, "pass": password}
+def login(username, password):
+    url = "https://multiup.org/api/login"
+    data = {"username": username, "password": password}
     response = requests.post(url, data=data)
     if response.status_code == 200:
-        return response.json()["account_id"]
+        return response.json()
     else:
         return None
 
-def upload_file(account_id, file_path):
-    url = "https://multiup.org/api/upload"
-    data = {"account_id": account_id}
+def get_fastest_server():
+    url = "https://multiup.org/api/get-fastest-server"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()["server"]
+    else:
+        return None
+
+def get_list_hosts():
+    url = "https://multiup.org/api/get-list-hosts"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()["hosts"]
+    else:
+        return None
+
+def upload_file(user, server, file_path):
+    url = f"https://{server}.multiup.org/upload/index.php"
     with open(file_path, "rb") as file:
-        response = requests.post(url, data=data, files={"file": file})
+        files = {"files[]": file}
+        data = {"user": user}
+        response = requests.post(url, data=data, files=files)
     if response.status_code == 200:
         return response.json()
     else:
@@ -40,28 +57,29 @@ def decrypt_data(encrypted_data, key):
     return decrypted_data.decode()
 
 def save_credentials(username, password):
-    encrypted_username, username_key = encrypt_data(username)
-    encrypted_password, password_key = encrypt_data(password)
-    credentials = {
-        "username": encrypted_username.decode(),
-        "password": encrypted_password.decode(),
-        "username_key": username_key.decode(),
-        "password_key": password_key.decode()
-    }
-    with open("credentials.json", "w") as f:
-        json.dump(credentials, f)
+    try:
+        keyring.set_password("multiup_client", "username", username)
+        keyring.set_password("multiup_client", "password", password)
+        print("Credentials saved successfully")
+    except Exception as e:
+        print("Error saving credentials:", e)
 
 def load_credentials():
     try:
-        with open("credentials.json", "r") as f:
-            credentials = json.load(f)
-        decrypted_username = decrypt_data(base64.b64decode(credentials["username"]),
-                                          base64.b64decode(credentials["username_key"]))
-        decrypted_password = decrypt_data(base64.b64decode(credentials["password"]),
-                                          base64.b64decode(credentials["password_key"]))
-        return decrypted_username, decrypted_password
-    except FileNotFoundError:
+        username = keyring.get_password("multiup_client", "username")
+        password = keyring.get_password("multiup_client", "password")
+        return username, password
+    except Exception as e:
+        print("Error loading credentials:", e)
         return None, None
+    
+def get_list_hosts():
+    url = "https://multiup.org/api/get-list-hosts"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()["hosts"]
+    else:
+        return None
 
 class MultiUpClient(TkinterDnD.Tk):
     def __init__(self):
@@ -91,14 +109,17 @@ class MultiUpClient(TkinterDnD.Tk):
         self.server_list.heading("Servers", text="Servers")
         self.server_list.place(x=480, y=20, width=300, height=400)
 
-        self.select_button = ttk.Button(self, text="Select Files", command=self.select_files)
-        self.select_button.place(x=20, y=450)
+        self.select_server_button = ttk.Button(self, text="Select Server", command=self.select_server)
+        self.select_server_button.place(x=360, y=140)
 
-        self.logout_button = ttk.Button(self, text="Logout", command=self.logout)
-        self.logout_button.place(x=480, y=450)
+        self.select_button = ttk.Button(self, text="Select Files", command=self.select_files)
+        self.select_button.place(x=360, y=180)
 
         self.upload_button = ttk.Button(self, text="Upload", command=self.upload_files)
-        self.upload_button.place(x=350, y=350)
+        self.upload_button.place(x=360, y=220)
+
+        self.logout_button = ttk.Button(self, text="Logout", command=self.logout)
+        self.logout_button.place(x=360, y=260)
 
         self.username_label = ttk.Label(self, text="Username:")
         self.username_label.place(x=50, y=20)
@@ -122,6 +143,7 @@ class MultiUpClient(TkinterDnD.Tk):
         self.geometry("400x200")
         self.file_list.place_forget()
         self.server_list.place_forget()
+        self.select_server_button.place_forget()
         self.select_button.place_forget()
         self.logout_button.place_forget()
         self.upload_button.place_forget()
@@ -143,9 +165,14 @@ class MultiUpClient(TkinterDnD.Tk):
         elif not password:
             self.error_label.config(text="Please type in password")
         else:
-            self.account_id = get_account_id(username, password)
-            if self.account_id is not None:
+            login_response = login(username, password)
+            if login_response and login_response["error"] == "success":
                 save_credentials(username, password)
+                self.user_info = {
+                    "user": login_response["user"],
+                    "account_type": login_response["account_type"],
+                    "premium_days_left": login_response["premium_days_left"],
+                }
                 self.show_main_ui()
             else:
                 self.error_label.config(text="Invalid credentials")
@@ -160,16 +187,17 @@ class MultiUpClient(TkinterDnD.Tk):
 
         self.file_list.place(x=20, y=20, width=300, height=400)
         self.server_list.place(x=480, y=20, width=300, height=400)
-        self.select_button.place(x=20, y=450)
-        self.logout_button.place(x=480, y=450)
-        self.upload_button.place(x=350, y=350)
+        self.select_server_button.place(x=360, y=140)
+        self.select_button.place(x=360, y=180)
+        self.upload_button.place(x=360, y=220)
+        self.logout_button.place(x=360, y=260)
 
     def logout(self):
         try:
             os.remove("credentials.json")
         except FileNotFoundError:
             pass
-        self.account_id = None
+        self.user_info = None
         self.show_login_ui()
 
     def select_files(self):
@@ -177,13 +205,31 @@ class MultiUpClient(TkinterDnD.Tk):
         for file_path in file_paths:
             self.file_list.insert("", "end", text=os.path.basename(file_path), values=(file_path,))
 
+    def select_files(self):
+        file_paths = filedialog.askopenfilenames()
+        for file_path in file_paths:
+            self.file_list.insert("", "end", text=os.path.basename(file_path), values=(file_path,))
+
+    def select_server(self):
+        hosts = get_list_hosts()
+        if hosts is not None:
+            self.server_list.delete(*self.server_list.get_children())
+            for host in hosts:
+                self.server_list.insert("", "end", text=host, values=(host,))
+        else:
+            print("Failed to get the list of available hosts")
+
     def upload_files(self):
-        if self.account_id is not None:
+        if self.user_info is not None:
             selected_files = self.file_list.selection()
+            server = get_fastest_server()
+            if server is None:
+                print("Failed to get the fastest server")
+                return
             for file_item in selected_files:
                 file_path = self.file_list.item(file_item)["values"][0]
                 print(f"Uploading {file_path}")
-                response = upload_file(self.account_id, file_path)
+                response = upload_file(self.user_info["user"], server, file_path)
                 print(response)
         else:
             print("Please log in first")

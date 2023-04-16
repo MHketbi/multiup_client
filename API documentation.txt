@@ -1,0 +1,74 @@
+Here is a brief overview of the available endpoints and their main parameters: 
+ 
+1. Login: 
+   - Request URL: https://multiup.org/api/login 
+   - POST parameters: username, password 
+   - Response parameters: error, login, user, account_type, premium_days_left 
+ 
+2. Get the fastest server: 
+   - Request URL: https://multiup.org/api/get-fastest-server 
+   - GET parameters: size (optional) 
+   - POST parameters: torrent (optional) 
+   - Response parameters: error, server 
+ 
+3. Get a list of available hosts: 
+   - Request URL: https://multiup.org/api/get-list-hosts 
+   - Response parameters: error, hosts 
+ 
+4. Add project: 
+   - Request URL: https://multiup.org/api/add-project 
+   - POST parameters: name, password (optional), description (optional), user-id (optional) 
+   - Response parameters: error, hash, name, description, password 
+ 
+5. Upload your file: 
+   - Request URL: https://SERVER.multiup.org/upload/index.php (SERVER determined in "Get fastest server") 
+   - POST parameters: files[], user (optional), description (optional), project-hash (optional), host1...hostN (optional) 
+   - Response parameters: name, hash, size, type, url, sid, user, delete_url, delete_type 
+ 
+6. Remote upload your file: 
+   - Request URL: https://multiup.org/api/remote-upload 
+   - POST parameters: link, username (optional), password (optional), fileName (optional), description (optional), project (optional) 
+   - Response parameters: error, link, size, fileName 
+ 
+7. Upload your torrent or magnet: 
+   - Request URL: https://SERVER.multiup.org/upload/torrent.php (SERVER determined in "Get fastest server") 
+   - POST parameters: user, magnet (optional), file (optional), name, archive, archive-max-size (optional), archive-password (optional), no-seed, rename, files[], host1...hostN (optional) 
+   - Response parameters: Upload success 
+ 
+API User-specific actions: 
+ 
+1. List files for user: 
+   - Request URL: https://multiup.org/api/list-files 
+   - POST parameters: username, password, max (optional), search (optional) 
+   - Response parameters: error, numberFiles, files 
+ 
+2. List torrents for user: 
+   - Request URL: https://multiup.org/api/list-torrents 
+   - POST parameters: username, password 
+   - Response parameters: error, numberTorrents, torrents 
+ 
+3. Delete torrent for user: 
+   - Request URL: https://multiup.org/api/delete-torrent 
+   - POST parameters: username, password, torrentId (optional) 
+   - Response parameters: error 
+ 
+4. Edit host accounts for user: 
+   - Request URL: https://multiup.org/api/set-login-host-account 
+   - POST parameters: username, password, host-name, host-login (optional), host-password (optional) 
+   - Response parameters: error 
+ 
+API Links-related actions: 
+ 
+1. Check the validity of a file: 
+   - Request URL: https://multiup.org/api/check-file 
+   - POST parameters: link 
+   - Response parameters: error, file_name, size, date_upload, time_upload, date_last_download, number_downloads, description, hosts 
+ 
+2. Generate premium debrid link: 
+   - Request URL: https://multiup.org/api/generate-debrid-link 
+   - POST parameters: link, password (optional) 
+   - Response parameters: error, debrid_link 
+ 
+3. Get a list of available hosts for debrid: 
+   - Request URL: https://multiup.org/api/get-list-hosts-debrid 
+   - Response parameters: error, debrid_link
