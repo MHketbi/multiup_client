@@ -72,7 +72,26 @@ def load_credentials():
     except Exception as e:
         print("Error loading credentials:", e)
         return None, None
-    
+
+def save_login_state(logged_in):
+    with open("login_state.json", "w") as f:
+        json.dump({"logged_in": logged_in}, f)
+
+def load_login_state():
+    try:
+        with open("login_state.json", "r") as f:
+            state = json.load(f)
+        return state["logged_in"]
+    except FileNotFoundError:
+        return False
+
+def get_account_id(username, password):
+    login_response = login(username, password)
+    if login_response and login_response["error"] == "success":
+        return login_response["user"]
+    else:
+        return None
+
 def get_list_hosts():
     url = "https://multiup.org/api/get-list-hosts"
     response = requests.get(url)
@@ -85,16 +104,22 @@ class MultiUpClient(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
 
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
         self.title("MultiUp Client")
         self.resizable(False, False)
 
         self.create_widgets()
 
-        username, password = load_credentials()
-        if username and password:
-            self.account_id = get_account_id(username, password)
-            if self.account_id is not None:
-                self.show_main_ui()
+        self.logged_in = load_login_state()
+        if self.logged_in:
+            username, password = load_credentials()
+            if username and password:
+                self.account_id = get_account_id(username, password)
+                if self.account_id is not None:
+                    self.show_main_ui()
+                else:
+                    self.show_login_ui()
             else:
                 self.show_login_ui()
         else:
@@ -197,6 +222,7 @@ class MultiUpClient(TkinterDnD.Tk):
             os.remove("credentials.json")
         except FileNotFoundError:
             pass
+        save_login_state(False)
         self.user_info = None
         self.show_login_ui()
 
@@ -234,8 +260,13 @@ class MultiUpClient(TkinterDnD.Tk):
         else:
             print("Please log in first")
 
+    def on_close(self):
+        if self.user_info is not None:
+            save_login_state(True)
+        else:
+            save_login_state(False)
+        self.destroy()
 
 if __name__ == "__main__":
     app = MultiUpClient()
     app.mainloop()
-
